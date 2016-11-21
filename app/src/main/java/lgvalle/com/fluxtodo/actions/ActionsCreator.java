@@ -60,4 +60,9 @@ public class ActionsCreator {
     public void destroyCompleted() {
         dispatcher.dispatch(TodoActions.TODO_DESTROY_COMPLETED);
     }
+
+    public void destroyNotCompleted() {
+        dispatcher.dispatch(TodoActions.TODO_DESTROY_NOT_COMPLETED);
+    }
+
 }

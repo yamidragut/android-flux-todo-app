@@ -53,16 +53,34 @@
             android:layout_height="match_parent"
             android:layout_below="@+id/main_input"
             android:scrollbars="vertical"
-            android:layout_above="@+id/main_clear_completed" />
+            android:layout_above="@+id/main_clear_container" />
 
-        <Button
-            android:id="@+id/main_clear_completed"
+        <LinearLayout
+            android:id="@+id/main_clear_container"
             android:layout_width="wrap_content"
-            android:padding="10dp"
             android:layout_height="wrap_content"
-            android:text="Clear completed"
             android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true" />
+            android:layout_centerHorizontal="true"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/main_clear_completed"
+                android:layout_width="wrap_content"
+                android:padding="10dp"
+                android:layout_marginLeft="15dp"
+                android:layout_height="wrap_content"
+                android:text="Clear completed" />
+
+            <Button
+                android:id="@+id/main_clear_not_completed"
+                android:layout_width="wrap_content"
+                android:padding="10dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:text="Clear not completed" />
+
+        </LinearLayout>
+
     </RelativeLayout>
 
 

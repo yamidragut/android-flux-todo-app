@@ -71,6 +71,15 @@ public class TodoActivity extends AppCompatActivity {
             }
         });
 
+        Button mainClearNotCompleted = (Button) findViewById(R.id.main_clear_not_completed);
+        mainClearNotCompleted.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                clearNotCompleted();
+                resetMainCheck();
+            }
+        });
+
 
         RecyclerView mainList = (RecyclerView) findViewById(R.id.main_list);
         mainList.setLayoutManager(new LinearLayoutManager(this));
@@ -119,6 +128,10 @@ public class TodoActivity extends AppCompatActivity {
 
     private void clearCompleted() {
         actionsCreator.destroyCompleted();
+    }
+
+    private void clearNotCompleted() {
+        actionsCreator.destroyNotCompleted();
     }
 
     private void resetMainInput() {

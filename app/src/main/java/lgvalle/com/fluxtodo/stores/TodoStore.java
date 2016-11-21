@@ -83,6 +83,11 @@ public class TodoStore extends Store {
                 emitStoreChange();
                 break;
 
+            case TodoActions.TODO_DESTROY_NOT_COMPLETED:
+                destroyNotCompleted();
+                emitStoreChange();
+                break;
+
             case TodoActions.TODO_TOGGLE_COMPLETE_ALL:
                 updateCompleteAll();
                 emitStoreChange();
@@ -97,6 +102,16 @@ public class TodoStore extends Store {
         while (iter.hasNext()) {
             Todo todo = iter.next();
             if (todo.isComplete()) {
+                iter.remove();
+            }
+        }
+    }
+
+    private void destroyNotCompleted() {
+        Iterator<Todo> iter = todos.iterator();
+        while (iter.hasNext()) {
+            Todo todo = iter.next();
+            if (!todo.isComplete()) {
                 iter.remove();
             }
         }
