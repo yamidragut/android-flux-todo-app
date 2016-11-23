@@ -12,22 +12,27 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
-import com.squareup.otto.Bus;
-import com.squareup.otto.Subscribe;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import io.reactivex.functions.Consumer;
+import lgvalle.com.fluxtodo.actions.Action;
 import lgvalle.com.fluxtodo.actions.ActionsCreator;
+import lgvalle.com.fluxtodo.actions.UiActions;
 import lgvalle.com.fluxtodo.dispatcher.Dispatcher;
 import lgvalle.com.fluxtodo.stores.TodoStore;
 
 public class TodoActivity extends AppCompatActivity {
 
-    private EditText mainInput;
-    private ViewGroup mainLayout;
+    @BindView(R.id.main_input) EditText mainInput;
+    @BindView(R.id.main_layout) ViewGroup mainLayout;
+    @BindView(R.id.main_checkbox) CheckBox mainCheck;
+
     private Dispatcher dispatcher;
     private ActionsCreator actionsCreator;
     private TodoStore todoStore;
     private TodoRecyclerAdapter listAdapter;
-    private CheckBox mainCheck;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,53 +43,56 @@ public class TodoActivity extends AppCompatActivity {
     }
 
     private void initDependencies() {
-        dispatcher = Dispatcher.get(new Bus());
+        dispatcher = Dispatcher.get();
         actionsCreator = ActionsCreator.get(dispatcher);
         todoStore = TodoStore.get(dispatcher);
+
+        subscribe();
+    }
+
+    private void subscribe() {
+        dispatcher.subscribe(new Consumer<Action>() {
+            @Override
+            public void accept(Action action) throws Exception {
+                switch (action.getType()) {
+                    case UiActions.UPDATE_UI_ACTION:
+                        updateUI();
+                        break;
+                }
+            }
+        });
     }
 
     private void setupView() {
-        mainLayout = ((ViewGroup) findViewById(R.id.main_layout));
-        mainInput = (EditText) findViewById(R.id.main_input);
-
-        Button mainAdd = (Button) findViewById(R.id.main_add);
-        mainAdd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                addTodo();
-                resetMainInput();
-            }
-        });
-        mainCheck = (CheckBox) findViewById(R.id.main_checkbox);
-        mainCheck.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                checkAll();
-            }
-        });
-        Button mainClearCompleted = (Button) findViewById(R.id.main_clear_completed);
-        mainClearCompleted.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                clearCompleted();
-                resetMainCheck();
-            }
-        });
-
-        Button mainClearNotCompleted = (Button) findViewById(R.id.main_clear_not_completed);
-        mainClearNotCompleted.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                clearNotCompleted();
-                resetMainCheck();
-            }
-        });
-
+        ButterKnife.bind(this);
 
         RecyclerView mainList = (RecyclerView) findViewById(R.id.main_list);
         mainList.setLayoutManager(new LinearLayoutManager(this));
         listAdapter = new TodoRecyclerAdapter(actionsCreator);
         mainList.setAdapter(listAdapter);
+    }
+
+    @OnClick (R.id.main_add)
+    public void onAddClick() {
+        addTodo();
+        resetMainInput();
+    }
+
+    @OnClick (R.id.main_checkbox)
+    public void onCheckboxClick() {
+        checkAll();
+    }
+
+    @OnClick (R.id.main_clear_completed)
+    public void onClearCompletedClick() {
+        clearCompleted();
+        resetMainCheck();
+    }
+
+    @OnClick (R.id.main_clear_not_completed)
+    public void onClearNotCompletedClick() {
+        clearCompleted();
+        resetMainCheck();
     }
 
     private void updateUI() {
@@ -105,15 +113,18 @@ public class TodoActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        dispatcher.register(this);
-        dispatcher.register(todoStore);
+        updateUI();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        dispatcher.unregister(this);
-        dispatcher.unregister(todoStore);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        dispatcher.unsubscribeAll();
     }
 
     private void addTodo() {
@@ -152,8 +163,4 @@ public class TodoActivity extends AppCompatActivity {
         return mainInput.getText().toString();
     }
 
-    @Subscribe
-    public void onTodoStoreChange(TodoStore.TodoStoreChangeEvent event) {
-        updateUI();
-    }
 }

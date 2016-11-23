@@ -1,13 +1,13 @@
 package lgvalle.com.fluxtodo.stores;
 
-import com.squareup.otto.Subscribe;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import io.reactivex.functions.Consumer;
 import lgvalle.com.fluxtodo.actions.Action;
+import lgvalle.com.fluxtodo.actions.ActionsCreator;
 import lgvalle.com.fluxtodo.actions.TodoActions;
 import lgvalle.com.fluxtodo.dispatcher.Dispatcher;
 import lgvalle.com.fluxtodo.model.Todo;
@@ -25,6 +25,8 @@ public class TodoStore extends Store {
     protected TodoStore(Dispatcher dispatcher) {
         super(dispatcher);
         todos = new ArrayList<>();
+
+        subscribe();
     }
 
     public static TodoStore get(Dispatcher dispatcher) {
@@ -42,9 +44,17 @@ public class TodoStore extends Store {
         return lastDeleted != null;
     }
 
+    private void subscribe() {
+        Dispatcher.get().subscribe(new Consumer<Action>() {
+            @Override
+            public void accept(Action action) throws Exception {
+                onAction(action);
+            }
+        });
+    }
+
 
     @Override
-    @Subscribe
     @SuppressWarnings("unchecked")
     public void onAction(Action action) {
         long id;
@@ -190,11 +200,4 @@ public class TodoStore extends Store {
         Collections.sort(todos);
     }
 
-    @Override
-    StoreChangeEvent changeEvent() {
-        return new TodoStoreChangeEvent();
-    }
-
-    public class TodoStoreChangeEvent implements StoreChangeEvent {
-    }
 }

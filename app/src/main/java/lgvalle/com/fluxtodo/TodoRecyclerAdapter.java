@@ -13,6 +13,8 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import lgvalle.com.fluxtodo.actions.ActionsCreator;
 import lgvalle.com.fluxtodo.model.Todo;
 
@@ -51,16 +53,14 @@ public class TodoRecyclerAdapter extends RecyclerView.Adapter<TodoRecyclerAdapte
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView todoText;
-        public CheckBox todoCheck;
-        public Button todoDelete;
+        @BindView(R.id.row_text) TextView todoText;
+        @BindView(R.id.row_checkbox) CheckBox todoCheck;
+        @BindView(R.id.row_delete) Button todoDelete;
 
         public ViewHolder(View v) {
             super(v);
-            todoText = (TextView) v.findViewById(R.id.row_text);
-            todoCheck = (CheckBox) v.findViewById(R.id.row_checkbox);
-            todoDelete = (Button) v.findViewById(R.id.row_delete);
 
+            ButterKnife.bind(this, v);
         }
 
         public void bindView(final Todo todo) {

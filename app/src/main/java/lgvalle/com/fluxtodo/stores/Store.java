@@ -1,6 +1,7 @@
 package lgvalle.com.fluxtodo.stores;
 
 import lgvalle.com.fluxtodo.actions.Action;
+import lgvalle.com.fluxtodo.actions.ActionsCreator;
 import lgvalle.com.fluxtodo.dispatcher.Dispatcher;
 
 /**
@@ -8,18 +9,16 @@ import lgvalle.com.fluxtodo.dispatcher.Dispatcher;
  */
 public abstract class Store {
 
-    final Dispatcher dispatcher;
+    final private ActionsCreator actionsCreator;
 
     protected Store(Dispatcher dispatcher) {
-        this.dispatcher = dispatcher;
+        actionsCreator = ActionsCreator.get(dispatcher);
     }
 
     void emitStoreChange() {
-        dispatcher.emitChange(changeEvent());
+        actionsCreator.updateUi();
     }
 
-    abstract StoreChangeEvent changeEvent();
     public abstract void onAction(Action action);
 
-    public interface StoreChangeEvent {}
 }

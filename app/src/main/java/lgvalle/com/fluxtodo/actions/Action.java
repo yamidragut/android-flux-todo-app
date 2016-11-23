@@ -59,4 +59,12 @@ public class Action {
             return new Action(type, data);
         }
     }
+
+    @Override
+    public String toString() {
+        return "Action{" +
+                "data=" + data +
+                ", type='" + type + '\'' +
+                '}';
+    }
 }

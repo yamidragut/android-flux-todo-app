@@ -1,39 +1,45 @@
 package lgvalle.com.fluxtodo.dispatcher;
 
-import com.squareup.otto.Bus;
+import android.util.Log;
 
+import java.util.ArrayList;
+
+import io.reactivex.Flowable;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Consumer;
 import lgvalle.com.fluxtodo.actions.Action;
-import lgvalle.com.fluxtodo.stores.Store;
 
 /**
  * Created by lgvalle on 19/07/15.
  */
 public class Dispatcher {
-    private final Bus bus;
+
+    private static final String TAG = Dispatcher.class.getSimpleName();
+
+    private Flowable<Action> actionFlowable;
     private static Dispatcher instance;
 
-    public static Dispatcher get(Bus bus) {
+    private final CompositeDisposable actionsDisposables = new CompositeDisposable();
+
+    private static final ArrayList<Consumer<Action>> consumersList = new ArrayList<>();
+
+    public static Dispatcher get() {
         if (instance == null) {
-            instance = new Dispatcher(bus);
+            instance = new Dispatcher();
         }
         return instance;
     }
 
-    Dispatcher(Bus bus) {
-        this.bus = bus;
-    }
-
-    public void register(final Object cls) {
-        bus.register(cls);
+    Dispatcher() {
 
     }
 
-    public void unregister(final Object cls) {
-        bus.unregister(cls);
+    public void subscribe(Consumer<Action> consumer) {
+        consumersList.add(consumer);
     }
 
-    public void emitChange(Store.StoreChangeEvent o) {
-        post(o);
+    public void unsubscribeAll() {
+        actionsDisposables.clear();
     }
 
     public void dispatch(String type, Object... data) {
@@ -59,7 +65,19 @@ public class Dispatcher {
         return type == null || type.isEmpty();
     }
 
-    private void post(final Object event) {
-        bus.post(event);
+    private void post(final Action action) {
+//        actionFlowable = Flowable.just(action);
+
+        for (Consumer<Action> consumer : consumersList) {
+//            actionsDisposables.add(actionFlowable.subscribe(consumer));
+
+            try {
+                consumer.accept(action);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
     }
+
 }

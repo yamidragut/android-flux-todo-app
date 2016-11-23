@@ -65,4 +65,8 @@ public class ActionsCreator {
         dispatcher.dispatch(TodoActions.TODO_DESTROY_NOT_COMPLETED);
     }
 
+    public void updateUi() {
+        dispatcher.dispatch(UiActions.UPDATE_UI_ACTION);
+    }
+
 }
