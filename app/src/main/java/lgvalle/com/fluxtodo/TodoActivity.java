@@ -18,8 +18,8 @@ import butterknife.OnClick;
 import io.reactivex.functions.Consumer;
 import lgvalle.com.fluxtodo.actions.Action;
 import lgvalle.com.fluxtodo.actions.ActionsCreator;
-import lgvalle.com.fluxtodo.actions.UiActions;
 import lgvalle.com.fluxtodo.dispatcher.Dispatcher;
+import lgvalle.com.fluxtodo.stores.StoreState;
 import lgvalle.com.fluxtodo.stores.TodoStore;
 
 public class TodoActivity extends AppCompatActivity {
@@ -45,20 +45,16 @@ public class TodoActivity extends AppCompatActivity {
     private void initDependencies() {
         dispatcher = Dispatcher.get();
         actionsCreator = ActionsCreator.get(dispatcher);
-        todoStore = TodoStore.get(dispatcher);
+        todoStore = TodoStore.get();
 
         subscribe();
     }
 
     private void subscribe() {
-        dispatcher.subscribe(new Consumer<Action>() {
+        todoStore.getFlowable().subscribe(new Consumer<StoreState>() {
             @Override
-            public void accept(Action action) throws Exception {
-                switch (action.getType()) {
-                    case UiActions.UPDATE_UI_ACTION:
-                        updateUI();
-                        break;
-                }
+            public void accept(StoreState storeState) throws Exception {
+                updateUI();
             }
         });
     }
@@ -91,7 +87,7 @@ public class TodoActivity extends AppCompatActivity {
 
     @OnClick (R.id.main_clear_not_completed)
     public void onClearNotCompletedClick() {
-        clearCompleted();
+        clearNotCompleted();
         resetMainCheck();
     }
 

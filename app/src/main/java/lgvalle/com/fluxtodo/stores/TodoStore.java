@@ -1,13 +1,11 @@
 package lgvalle.com.fluxtodo.stores;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 import io.reactivex.functions.Consumer;
 import lgvalle.com.fluxtodo.actions.Action;
-import lgvalle.com.fluxtodo.actions.ActionsCreator;
 import lgvalle.com.fluxtodo.actions.TodoActions;
 import lgvalle.com.fluxtodo.dispatcher.Dispatcher;
 import lgvalle.com.fluxtodo.model.Todo;
@@ -18,30 +16,24 @@ import lgvalle.com.fluxtodo.model.Todo;
 public class TodoStore extends Store {
 
     private static TodoStore instance;
-    private final List<Todo> todos;
-    private Todo lastDeleted;
 
-
-    protected TodoStore(Dispatcher dispatcher) {
-        super(dispatcher);
-        todos = new ArrayList<>();
-
+    protected TodoStore() {
         subscribe();
     }
 
-    public static TodoStore get(Dispatcher dispatcher) {
+    public static TodoStore get() {
         if (instance == null) {
-            instance = new TodoStore(dispatcher);
+            instance = new TodoStore();
         }
         return instance;
     }
 
     public List<Todo> getTodos() {
-        return todos;
+        return ((TodoState) getState()).getTodos();
     }
 
     public boolean canUndo() {
-        return lastDeleted != null;
+        return ((TodoState) getState()).getLastDeleted() != null;
     }
 
     private void subscribe() {
@@ -53,90 +45,101 @@ public class TodoStore extends Store {
         });
     }
 
+    @Override
+    public TodoState initState() {
+        return new TodoState();
+    }
 
     @Override
     @SuppressWarnings("unchecked")
     public void onAction(Action action) {
         long id;
+        TodoState newState = null;
+
         switch (action.getType()) {
             case TodoActions.TODO_CREATE:
                 String text = ((String) action.getData().get(TodoActions.KEY_TEXT));
-                create(text);
-                emitStoreChange();
+                newState = create(((TodoState) getState()), text);
                 break;
 
             case TodoActions.TODO_DESTROY:
                 id = ((long) action.getData().get(TodoActions.KEY_ID));
-                destroy(id);
-                emitStoreChange();
+                newState = destroy(((TodoState) getState()), id);
                 break;
 
             case TodoActions.TODO_UNDO_DESTROY:
-                undoDestroy();
-                emitStoreChange();
+                newState = undoDestroy(((TodoState) getState()));
                 break;
 
             case TodoActions.TODO_COMPLETE:
                 id = ((long) action.getData().get(TodoActions.KEY_ID));
-                updateComplete(id, true);
-                emitStoreChange();
+                newState = updateComplete(((TodoState) getState()), id, true);
                 break;
 
             case TodoActions.TODO_UNDO_COMPLETE:
                 id = ((long) action.getData().get(TodoActions.KEY_ID));
-                updateComplete(id, false);
-                emitStoreChange();
+                newState = updateComplete(((TodoState) getState()), id, false);
                 break;
 
             case TodoActions.TODO_DESTROY_COMPLETED:
-                destroyCompleted();
-                emitStoreChange();
+                newState = destroyCompleted(((TodoState) getState()));
                 break;
 
             case TodoActions.TODO_DESTROY_NOT_COMPLETED:
-                destroyNotCompleted();
-                emitStoreChange();
+                newState = destroyNotCompleted(((TodoState) getState()));
                 break;
 
             case TodoActions.TODO_TOGGLE_COMPLETE_ALL:
-                updateCompleteAll();
-                emitStoreChange();
+                newState = updateCompleteAll(((TodoState) getState()));
                 break;
 
         }
 
+        if (newState != null) {
+            setState(newState);
+        }
+
     }
 
-    private void destroyCompleted() {
-        Iterator<Todo> iter = todos.iterator();
+    private TodoState destroyCompleted(TodoState state) {
+        TodoState newState = new TodoState(state);
+        Iterator<Todo> iter = newState.getTodos().iterator();
         while (iter.hasNext()) {
             Todo todo = iter.next();
             if (todo.isComplete()) {
                 iter.remove();
             }
         }
+
+        return newState;
     }
 
-    private void destroyNotCompleted() {
-        Iterator<Todo> iter = todos.iterator();
+    private TodoState destroyNotCompleted(TodoState state) {
+        TodoState newState = new TodoState(state);
+        Iterator<Todo> iter = newState.getTodos().iterator();
         while (iter.hasNext()) {
             Todo todo = iter.next();
             if (!todo.isComplete()) {
                 iter.remove();
             }
         }
+
+        return newState;
     }
 
-    private void updateCompleteAll() {
-        if (areAllComplete()) {
-            updateAllComplete(false);
+    private TodoState updateCompleteAll(TodoState state) {
+        TodoState newState;
+        if (areAllComplete(state)) {
+            newState = updateAllComplete(state, false);
         } else {
-            updateAllComplete(true);
+            newState = updateAllComplete(state, true);
         }
+
+        return newState;
     }
 
-    private boolean areAllComplete() {
-        for (Todo todo : todos) {
+    private boolean areAllComplete(TodoState state) {
+        for (Todo todo : state.getTodos()) {
             if (!todo.isComplete()) {
                 return false;
             }
@@ -144,47 +147,59 @@ public class TodoStore extends Store {
         return true;
     }
 
-    private void updateAllComplete(boolean complete) {
-        for (Todo todo : todos) {
+    private TodoState updateAllComplete(TodoState state, boolean complete) {
+        TodoState newState = new TodoState(state);
+        for (Todo todo : newState.getTodos()) {
             todo.setComplete(complete);
         }
+        return newState;
     }
 
-    private void updateComplete(long id, boolean complete) {
-        Todo todo = getById(id);
+    private TodoState updateComplete(TodoState state, long id, boolean complete) {
+        TodoState newState = new TodoState(state);
+        Todo todo = getById(newState.getTodos(), id);
         if (todo != null) {
             todo.setComplete(complete);
+            return newState;
         }
+
+        return null;
     }
 
-    private void undoDestroy() {
-        if (lastDeleted != null) {
-            addElement(lastDeleted.clone());
-            lastDeleted = null;
+    private TodoState undoDestroy(TodoState state) {
+        if (state.getLastDeleted() != null) {
+            TodoState newState = addElement(state, state.getLastDeleted().clone());
+            newState.setLastDeleted(null);
+            return newState;
         }
+
+        return null;
     }
 
-    private void create(String text) {
+    private TodoState create(TodoState state, String text) {
         long id = System.currentTimeMillis();
         Todo todo = new Todo(id, text);
-        addElement(todo);
-        Collections.sort(todos);
+        return addElement(state,todo);
     }
 
-    private void destroy(long id) {
-        Iterator<Todo> iter = todos.iterator();
+    private TodoState destroy(TodoState state, long id) {
+        TodoState newState = new TodoState(state);
+        Iterator<Todo> iter = state.getTodos().iterator();
         while (iter.hasNext()) {
             Todo todo = iter.next();
             if (todo.getId() == id) {
-                lastDeleted = todo.clone();
+                newState.setLastDeleted(todo.clone());
+                setState(newState);
                 iter.remove();
                 break;
             }
         }
+
+        return newState;
     }
 
-    private Todo getById(long id) {
-        Iterator<Todo> iter = todos.iterator();
+    private Todo getById(List<Todo> todoList, long id) {
+        Iterator<Todo> iter = todoList.iterator();
         while (iter.hasNext()) {
             Todo todo = iter.next();
             if (todo.getId() == id) {
@@ -195,9 +210,11 @@ public class TodoStore extends Store {
     }
 
 
-    private void addElement(Todo clone) {
-        todos.add(clone);
-        Collections.sort(todos);
+    private TodoState addElement(TodoState state, Todo clone) {
+        TodoState newState = new TodoState(state);
+        newState.getTodos().add(clone);
+        Collections.sort(newState.getTodos());
+        return newState;
     }
 
 }

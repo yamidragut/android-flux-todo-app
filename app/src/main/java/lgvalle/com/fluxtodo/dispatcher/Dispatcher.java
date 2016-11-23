@@ -1,12 +1,8 @@
 package lgvalle.com.fluxtodo.dispatcher;
 
-import android.util.Log;
-
-import java.util.ArrayList;
-
-import io.reactivex.Flowable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.processors.PublishProcessor;
 import lgvalle.com.fluxtodo.actions.Action;
 
 /**
@@ -16,12 +12,10 @@ public class Dispatcher {
 
     private static final String TAG = Dispatcher.class.getSimpleName();
 
-    private Flowable<Action> actionFlowable;
+    private final PublishProcessor<Action> publishProcessor = PublishProcessor.create();
     private static Dispatcher instance;
 
     private final CompositeDisposable actionsDisposables = new CompositeDisposable();
-
-    private static final ArrayList<Consumer<Action>> consumersList = new ArrayList<>();
 
     public static Dispatcher get() {
         if (instance == null) {
@@ -30,12 +24,10 @@ public class Dispatcher {
         return instance;
     }
 
-    Dispatcher() {
-
-    }
+    Dispatcher() { }
 
     public void subscribe(Consumer<Action> consumer) {
-        consumersList.add(consumer);
+        actionsDisposables.add(publishProcessor.subscribe(consumer));
     }
 
     public void unsubscribeAll() {
@@ -58,26 +50,16 @@ public class Dispatcher {
             Object value = data[i++];
             actionBuilder.bundle(key, value);
         }
-        post(actionBuilder.build());
+
+        dispatch(actionBuilder.build());
+    }
+
+    public void dispatch(final Action action) {
+        publishProcessor.onNext(action);
     }
 
     private boolean isEmpty(String type) {
         return type == null || type.isEmpty();
-    }
-
-    private void post(final Action action) {
-//        actionFlowable = Flowable.just(action);
-
-        for (Consumer<Action> consumer : consumersList) {
-//            actionsDisposables.add(actionFlowable.subscribe(consumer));
-
-            try {
-                consumer.accept(action);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
     }
 
 }
