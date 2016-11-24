@@ -8,7 +8,6 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
@@ -16,7 +15,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.functions.Consumer;
-import lgvalle.com.fluxtodo.actions.Action;
 import lgvalle.com.fluxtodo.actions.ActionsCreator;
 import lgvalle.com.fluxtodo.dispatcher.Dispatcher;
 import lgvalle.com.fluxtodo.stores.StoreState;

@@ -123,6 +123,8 @@ public class TodoStore extends Store {
             }
         }
 
+        newState.setLastDeleted(null);
+
         return newState;
     }
 
@@ -136,6 +138,8 @@ public class TodoStore extends Store {
             }
         }
 
+        newState.setLastDeleted(null);
+
         return newState;
     }
 
@@ -146,6 +150,8 @@ public class TodoStore extends Store {
         } else {
             newState = updateAllComplete(state, true);
         }
+
+        newState.setLastDeleted(null);
 
         return newState;
     }
@@ -164,6 +170,9 @@ public class TodoStore extends Store {
         for (Todo todo : newState.getTodos()) {
             todo.setComplete(complete);
         }
+
+        newState.setLastDeleted(null);
+
         return newState;
     }
 
@@ -174,6 +183,8 @@ public class TodoStore extends Store {
             todo.setComplete(complete);
             return newState;
         }
+
+        newState.setLastDeleted(null);
 
         return null;
     }
@@ -226,6 +237,7 @@ public class TodoStore extends Store {
         TodoState newState = new TodoState(state);
         newState.getTodos().add(clone);
         Collections.sort(newState.getTodos());
+        newState.setLastDeleted(null);
         return newState;
     }
 
