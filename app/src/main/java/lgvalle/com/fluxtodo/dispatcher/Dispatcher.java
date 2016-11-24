@@ -2,6 +2,7 @@ package lgvalle.com.fluxtodo.dispatcher;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Predicate;
 import io.reactivex.processors.PublishProcessor;
 import lgvalle.com.fluxtodo.actions.Action;
 
@@ -28,6 +29,15 @@ public class Dispatcher {
 
     public void subscribe(Consumer<Action> consumer) {
         actionsDisposables.add(publishProcessor.subscribe(consumer));
+    }
+
+    public void subscribe(final String actionTypeFilter, Consumer<Action> consumer) {
+        actionsDisposables.add(publishProcessor.filter(new Predicate<Action>() {
+            @Override
+            public boolean test(Action action) throws Exception {
+                return (actionTypeFilter.equals(action.getType()));
+            }
+        }).subscribe(consumer));
     }
 
     public void unsubscribeAll() {

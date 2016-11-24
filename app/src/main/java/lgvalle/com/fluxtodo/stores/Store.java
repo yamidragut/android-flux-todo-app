@@ -43,6 +43,6 @@ public abstract class Store {
     }
 
     public abstract StoreState initState();
-    public abstract void onAction(Action action);
+    public abstract void subscribeToActions();
 
 }

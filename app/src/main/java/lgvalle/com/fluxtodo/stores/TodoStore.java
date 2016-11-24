@@ -18,7 +18,7 @@ public class TodoStore extends Store {
     private static TodoStore instance;
 
     protected TodoStore() {
-        subscribe();
+        subscribeToActions();
     }
 
     public static TodoStore get() {
@@ -36,15 +36,6 @@ public class TodoStore extends Store {
         return ((TodoState) getState()).getLastDeleted() != null;
     }
 
-    private void subscribe() {
-        Dispatcher.get().subscribe(new Consumer<Action>() {
-            @Override
-            public void accept(Action action) throws Exception {
-                onAction(action);
-            }
-        });
-    }
-
     @Override
     public TodoState initState() {
         return new TodoState();
@@ -52,53 +43,74 @@ public class TodoStore extends Store {
 
     @Override
     @SuppressWarnings("unchecked")
-    public void onAction(Action action) {
-        long id;
-        TodoState newState = null;
+    public void subscribeToActions() {
 
-        switch (action.getType()) {
-            case TodoActions.TODO_CREATE:
+        Dispatcher.get().subscribe(TodoActions.TODO_CREATE, new Consumer<Action>() {
+            @Override
+            public void accept(Action action) throws Exception {
                 String text = ((String) action.getData().get(TodoActions.KEY_TEXT));
-                newState = create(((TodoState) getState()), text);
-                break;
+                updateState(create(((TodoState) getState()), text));
+            }
+        });
 
-            case TodoActions.TODO_DESTROY:
-                id = ((long) action.getData().get(TodoActions.KEY_ID));
-                newState = destroy(((TodoState) getState()), id);
-                break;
+        Dispatcher.get().subscribe(TodoActions.TODO_DESTROY, new Consumer<Action>() {
+            @Override
+            public void accept(Action action) throws Exception {
+                long id = ((long) action.getData().get(TodoActions.KEY_ID));
+                updateState(destroy(((TodoState) getState()), id));
+            }
+        });
 
-            case TodoActions.TODO_UNDO_DESTROY:
-                newState = undoDestroy(((TodoState) getState()));
-                break;
+        Dispatcher.get().subscribe(TodoActions.TODO_UNDO_DESTROY, new Consumer<Action>() {
+            @Override
+            public void accept(Action action) throws Exception {
+                updateState(undoDestroy(((TodoState) getState())));
+            }
+        });
 
-            case TodoActions.TODO_COMPLETE:
-                id = ((long) action.getData().get(TodoActions.KEY_ID));
-                newState = updateComplete(((TodoState) getState()), id, true);
-                break;
+        Dispatcher.get().subscribe(TodoActions.TODO_COMPLETE, new Consumer<Action>() {
+            @Override
+            public void accept(Action action) throws Exception {
+                long id = ((long) action.getData().get(TodoActions.KEY_ID));
+                updateState(updateComplete(((TodoState) getState()), id, true));
+            }
+        });
 
-            case TodoActions.TODO_UNDO_COMPLETE:
-                id = ((long) action.getData().get(TodoActions.KEY_ID));
-                newState = updateComplete(((TodoState) getState()), id, false);
-                break;
+        Dispatcher.get().subscribe(TodoActions.TODO_UNDO_COMPLETE, new Consumer<Action>() {
+            @Override
+            public void accept(Action action) throws Exception {
+                long id = ((long) action.getData().get(TodoActions.KEY_ID));
+                updateState(updateComplete(((TodoState) getState()), id, false));
+            }
+        });
 
-            case TodoActions.TODO_DESTROY_COMPLETED:
-                newState = destroyCompleted(((TodoState) getState()));
-                break;
+        Dispatcher.get().subscribe(TodoActions.TODO_DESTROY_COMPLETED, new Consumer<Action>() {
+            @Override
+            public void accept(Action action) throws Exception {
+                updateState(destroyCompleted(((TodoState) getState())));
+            }
+        });
 
-            case TodoActions.TODO_DESTROY_NOT_COMPLETED:
-                newState = destroyNotCompleted(((TodoState) getState()));
-                break;
+        Dispatcher.get().subscribe(TodoActions.TODO_DESTROY_NOT_COMPLETED, new Consumer<Action>() {
+            @Override
+            public void accept(Action action) throws Exception {
+                updateState(destroyNotCompleted(((TodoState) getState())));
+            }
+        });
 
-            case TodoActions.TODO_TOGGLE_COMPLETE_ALL:
-                newState = updateCompleteAll(((TodoState) getState()));
-                break;
+        Dispatcher.get().subscribe(TodoActions.TODO_TOGGLE_COMPLETE_ALL, new Consumer<Action>() {
+            @Override
+            public void accept(Action action) throws Exception {
+                updateState(updateCompleteAll(((TodoState) getState())));
+            }
+        });
 
-        }
+    }
 
+    private void updateState(TodoState newState) {
         if (newState != null) {
             setState(newState);
         }
-
     }
 
     private TodoState destroyCompleted(TodoState state) {
